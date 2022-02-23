@@ -2,13 +2,23 @@ package com.example.geoquiz
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
+
+private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
+
+    //set up view model
+    private val quizViewModel: QuizViewModel by lazy {
+        ViewModelProvider(this).get(QuizViewModel::class.java)
+    }
 
     // set up variables for components
     private lateinit var trueButton: Button
@@ -17,21 +27,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var previousButton: ImageButton
     private lateinit var questionTextView: TextView
 
-    private val questionBank = listOf(
-        Question(R.string.question_australia, true),
-        Question(R.string.question_oceans, true),
-        Question(R.string.question_mideast, false),
-        Question(R.string.question_africa, false),
-        Question(R.string.question_americas, true),
-        Question(R.string.question_asia, true)
-    )
-
-    // set up a variable to keep track of where the current index # is at
-    private var currentIndex = 0
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // call log message
+        Log.d(TAG, "onCreate(Bundle?) called")
         setContentView(R.layout.activity_main)
 
         // initialize component variables
@@ -52,11 +51,10 @@ class MainActivity : AppCompatActivity() {
             checkAnswer(false)
         }
 
-
         // set up nextButton listener-- on click, add one to index (so the question bank
         // moves to the next index number and sets the text to the question at that index
         nextButton.setOnClickListener {
-            currentIndex = (currentIndex + 1) % questionBank.size
+            quizViewModel.moveToNext()
             updateQuestion()
         }
         updateQuestion()
@@ -64,32 +62,50 @@ class MainActivity : AppCompatActivity() {
         // set up previous button -- move back a question
         previousButton.setOnClickListener {
             // check if there are prior questions to go back to, else previous button doesn't function
-            if (currentIndex < 1) {
-                Toast.makeText(this, "No previous questions.", Toast.LENGTH_SHORT).show()
-            } else {
-                currentIndex = (currentIndex - 1) % questionBank.size
-                updateQuestion()
+            quizViewModel.moveToPrevious()
+            updateQuestion()
             }
-        }
 
         // set up event listener (for user click) on the text view / question
         questionTextView.setOnClickListener {
-            currentIndex = (currentIndex + 1) % questionBank.size
+            quizViewModel.moveToNext()
             updateQuestion()
         }
+    }
 
+    // these will run when each of the android lifecycle functions are called, and print a log
+    // message so we can see how/when these functions are called in the process of using apps
+    override fun onStart() {
+        super.onStart()
+        Log.d(TAG, "onStart() called")
+    }
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume() called")
+    }
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "onPause() called")
+    }
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "onStop() called")
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy() called")
     }
 
 
     // update the question from the questionBank list based on the currentIndex #
     private fun updateQuestion() {
-        val questionTextResId = questionBank[currentIndex].textResId
+        val questionTextResId = quizViewModel.currentQuestionText
         questionTextView.setText(questionTextResId)
     }
 
     // check if user answer is correct or not
     private fun checkAnswer(userAnswer: Boolean) {
-        val correctAnswer = questionBank[currentIndex].answer
+        val correctAnswer = quizViewModel.currentQuestionAnswer
 
         // check if answer is correct / incorrect, show appropriate pop up
         val messageResId = if (userAnswer == correctAnswer) {
