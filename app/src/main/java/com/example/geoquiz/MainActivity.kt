@@ -9,9 +9,9 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 
 private const val TAG = "MainActivity"
+private const val KEY_INDEX = "index"
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,6 +32,11 @@ class MainActivity : AppCompatActivity() {
         // call log message
         Log.d(TAG, "onCreate(Bundle?) called")
         setContentView(R.layout.activity_main)
+
+        // check for this value (from line 101 // **gamma)
+        val currentIndex = savedInstanceState?.getInt(KEY_INDEX, 0) ?: 0
+        quizViewModel.currentIndex = currentIndex
+
 
         // initialize component variables
         trueButton = findViewById(R.id.true_button)
@@ -62,9 +67,14 @@ class MainActivity : AppCompatActivity() {
         // set up previous button -- move back a question
         previousButton.setOnClickListener {
             // check if there are prior questions to go back to, else previous button doesn't function
-            quizViewModel.moveToPrevious()
-            updateQuestion()
+            val currentIndex = quizViewModel.currentIndex
+            if (currentIndex < 1) {
+            Toast.makeText(this, "No previous questions.", Toast.LENGTH_SHORT).show()
+            } else {
+                quizViewModel.moveToPrevious()
+                updateQuestion()
             }
+        }
 
         // set up event listener (for user click) on the text view / question
         questionTextView.setOnClickListener {
@@ -87,6 +97,15 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         Log.d(TAG, "onPause() called")
     }
+
+    // **gamma -- override onSaveInstanceState(Bundle) to write the value of currentIndex
+    // to the bundle with the constant as its key
+    override fun onSaveInstanceState(savedInstanceState: Bundle) {
+        super.onSaveInstanceState(savedInstanceState)
+        Log.i(TAG, "onSaveInstanceState")
+        savedInstanceState.putInt(KEY_INDEX, quizViewModel.currentIndex)
+    }
+
     override fun onStop() {
         super.onStop()
         Log.d(TAG, "onStop() called")
@@ -99,6 +118,8 @@ class MainActivity : AppCompatActivity() {
 
     // update the question from the questionBank list based on the currentIndex #
     private fun updateQuestion() {
+        // for testing
+//        Log.d(TAG, "Updating question text", Exception())
         val questionTextResId = quizViewModel.currentQuestionText
         questionTextView.setText(questionTextResId)
     }

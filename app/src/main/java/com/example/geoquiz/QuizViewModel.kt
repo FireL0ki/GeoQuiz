@@ -9,7 +9,7 @@ private const val TAG = "QuizViewModel"
 class QuizViewModel : ViewModel() {
 
     // set up a variable to keep track of where the current index # is at
-    private var currentIndex = 0
+    var currentIndex = 0
 
     private val questionBank = listOf(
         Question(R.string.question_australia, true),
@@ -31,11 +31,7 @@ class QuizViewModel : ViewModel() {
     }
 
     fun moveToPrevious() {
-        if (currentIndex < 1) {
-//            Toast.makeText(this, "No previous questions.", Toast.LENGTH_SHORT).show()
-        } else {
-            currentIndex = (currentIndex - 1) % questionBank.size
-        }
+        currentIndex = (currentIndex - 1) % questionBank.size
     }
 
 
