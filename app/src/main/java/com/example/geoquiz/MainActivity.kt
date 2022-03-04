@@ -1,5 +1,6 @@
 package com.example.geoquiz
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -27,6 +28,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var previousButton: ImageButton
     private lateinit var questionTextView: TextView
 
+    //set up new cheat button for connecting new activity with cheat screen
+    private lateinit var cheatButton: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // call log message
@@ -44,6 +48,9 @@ class MainActivity : AppCompatActivity() {
         nextButton = findViewById(R.id.next_button)
         previousButton = findViewById(R.id.previous_button)
         questionTextView = findViewById(R.id.question_text_view)
+
+        // connect cheatButton for new cheatActivity
+        cheatButton = findViewById(R.id.cheat_button)
 
 
         // set up event listener for buttons, toast pop ups for true/false buttons
@@ -81,6 +88,15 @@ class MainActivity : AppCompatActivity() {
             quizViewModel.moveToNext()
             updateQuestion()
         }
+
+        // set up event listener for cheatbutton to start up new activity when clicked
+        cheatButton.setOnClickListener {
+            // start CheatActivity
+//            val intent = Intent(this, CheatActivity::class.java)
+            val answerIsTrue = quizViewModel.currentQuestionAnswer
+            val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
+            startActivity(intent)
+        }
     }
 
     // these will run when each of the android lifecycle functions are called, and print a log
@@ -105,7 +121,6 @@ class MainActivity : AppCompatActivity() {
         Log.i(TAG, "onSaveInstanceState")
         savedInstanceState.putInt(KEY_INDEX, quizViewModel.currentIndex)
     }
-
     override fun onStop() {
         super.onStop()
         Log.d(TAG, "onStop() called")
@@ -114,7 +129,6 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         Log.d(TAG, "onDestroy() called")
     }
-
 
     // update the question from the questionBank list based on the currentIndex #
     private fun updateQuestion() {
