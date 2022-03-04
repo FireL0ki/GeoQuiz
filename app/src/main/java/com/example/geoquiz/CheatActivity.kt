@@ -1,11 +1,15 @@
 package com.example.geoquiz
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+
+// create extra to send data back to mainActivity
+const val EXTRA_ANSWER_SHOWN = "com.example.geoquiz.answer_shown"
 
 private const val EXTRA_ANSWER_IS_TRUE =
     ".com.example.geoquiz.answer_is_true"
@@ -38,8 +42,17 @@ class CheatActivity : AppCompatActivity() {
                 else -> R.string.false_button
             }
             answerTextView.setText(answerText)
+            // new function to send data back to mainActivity
+            setAnswerShownResult(true)
         }
+    }
 
+    // create function to send data back to main
+    private fun setAnswerShownResult(isAnswerShown: Boolean) {
+        val data = Intent().apply {
+            putExtra(EXTRA_ANSWER_SHOWN, isAnswerShown)
+        }
+        setResult(Activity.RESULT_OK, data)
     }
 
     // instead of putting the Extra in the Intent in MainActivity,

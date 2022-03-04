@@ -1,6 +1,10 @@
 package com.example.geoquiz
 
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.ActivityOptions
 import android.content.Intent
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -13,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider
 
 private const val TAG = "MainActivity"
 private const val KEY_INDEX = "index"
+private const val REQUEST_CODE_CHEAT = 0
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,6 +35,9 @@ class MainActivity : AppCompatActivity() {
 
     //set up new cheat button for connecting new activity with cheat screen
     private lateinit var cheatButton: Button
+
+    // dealing with minimum API level 23 error for animation code
+    @SuppressLint("RestrictedApi")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,15 +97,42 @@ class MainActivity : AppCompatActivity() {
             updateQuestion()
         }
 
-        // set up event listener for cheatbutton to start up new activity when clicked
-        cheatButton.setOnClickListener {
+        // set up event listener for cheatButton to start up new activity when clicked
+        cheatButton.setOnClickListener { view ->
             // start CheatActivity
 //            val intent = Intent(this, CheatActivity::class.java)
             val answerIsTrue = quizViewModel.currentQuestionAnswer
             val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
-            startActivity(intent)
+
+            // add reveal animation when CheatActivity comes on screen
+            // check first if minimum SDK is in use for this animation
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val options = ActivityOptions
+                .makeClipRevealAnimation(view, 0, 0, view.width, view.height)
+//            startActivity(intent)
+            // modify cheatButton to call startActivityForResult(Intent, int)
+            startActivityForResult(intent, REQUEST_CODE_CHEAT) // deprecated
+            } else {
+                startActivityForResult(intent, REQUEST_CODE_CHEAT)
+        }
+        }
+        updateQuestion()
+    }
+
+    // override onActivityResult() to grab the value from the result sent from CheatActivity
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        // if the resultCode does not equal the predetermined code RESULT_OK
+        if (resultCode != Activity.RESULT_OK) {
+            return
+        }
+        if (requestCode == REQUEST_CODE_CHEAT) {
+            quizViewModel.isCheater =
+                data?.getBooleanExtra(EXTRA_ANSWER_SHOWN, false) ?: false
         }
     }
+
 
     // these will run when each of the android lifecycle functions are called, and print a log
     // message so we can see how/when these functions are called in the process of using apps
@@ -141,12 +176,18 @@ class MainActivity : AppCompatActivity() {
     // check if user answer is correct or not
     private fun checkAnswer(userAnswer: Boolean) {
         val correctAnswer = quizViewModel.currentQuestionAnswer
+//        // check if answer is correct / incorrect, show appropriate pop up
+//        val messageResId = if (userAnswer == correctAnswer) {
+//            R. string.correct_toast
+//        } else {
+//            R.string.incorrect_toast
+//        }
 
-        // check if answer is correct / incorrect, show appropriate pop up
-        val messageResId = if (userAnswer == correctAnswer) {
-            R. string.correct_toast
-        } else {
-            R.string.incorrect_toast
+        // modify checkAnswer(Boolean) function to check whether user cheated, & respond
+        val messageResId = when {
+            quizViewModel.isCheater -> R.string.judgment_toast
+            userAnswer == correctAnswer -> R.string.correct_toast
+            else -> R.string.incorrect_toast
         }
 
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show()

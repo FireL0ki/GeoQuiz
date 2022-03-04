@@ -10,6 +10,8 @@ class QuizViewModel : ViewModel() {
 
     // set up a variable to keep track of where the current index # is at
     var currentIndex = 0
+    // tracking value being passed from CheatActivity back to main
+    var isCheater = false
 
     private val questionBank = listOf(
         Question(R.string.question_australia, true),
